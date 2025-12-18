@@ -2,14 +2,19 @@ from django.contrib.auth.models import User
 from django.db import models
 
 class StaffProfile(models.Model):
-    ROLE_CHOICES = [
-        ('security', 'Security'),
-        ('housekeeping', 'Housekeeping'),
-        ('canteen', 'Canteen'),
+
+    STAFF_CATEGORY_CHOICES = [
+        ('SECURITY', 'Security'),
+        ('HOUSEKEEPING', 'Housekeeping'),
+        ('CANTEEN', 'Canteen'),
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    staff_category = models.CharField(
+        max_length=20,
+        choices=STAFF_CATEGORY_CHOICES
+    )
+    is_active_staff = models.BooleanField(default=True)
 
     def __str__(self):
-        return self.user.username
+        return f"{self.user.username} - {self.staff_category}"
