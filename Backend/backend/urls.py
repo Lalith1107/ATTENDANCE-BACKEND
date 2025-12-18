@@ -20,7 +20,7 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('attendance/', include('attendance.urls')),
     path('leaves/', include('leaves.urls')),
-    path('locations/', include('locations.urls')), 
+     path('locations/', include('locations.urls')), 
 
     # JWT Authentication (CUSTOM)
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
