@@ -1,3 +1,4 @@
+from openpyxl import Workbook
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.utils import timezone
@@ -172,3 +173,135 @@ Reviewed At: {leave.reviewed_at}
         )
 
     return HttpResponse("".join(response), content_type="text/plain")
+@login_required
+def export_my_leaves_excel(request):
+    leaves = LeaveRequest.objects.filter(
+        user=request.user
+    ).order_by("-applied_at")
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "My Leave History"
+
+    ws.append([
+        "Leave ID",
+        "Leave Type",
+        "Start Date",
+        "End Date",
+        "Status",
+        "Applied At",
+    ])
+
+    for leave in leaves:
+        ws.append([
+            leave.id,
+            leave.leave_type,
+            leave.start_date.strftime("%Y-%m-%d"),
+            leave.end_date.strftime("%Y-%m-%d"),
+            leave.status,
+            leave.applied_at.strftime("%Y-%m-%d"),
+        ])
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = (
+        'attachment; filename="my_leaves.xlsx"'
+    )
+
+    wb.save(response)
+    return response
+@login_required
+def export_all_leaves_excel(request):
+
+    if not request.user.is_superuser:
+        return HttpResponseForbidden("Admin access only")
+
+    leaves = LeaveRequest.objects.all().order_by("-applied_at")
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "All Leave History"
+
+    ws.append([
+        "Leave ID",
+        "Staff",
+        "Leave Type",
+        "Start Date",
+        "End Date",
+        "Status",
+        "Reviewed By",
+        "Reviewed At",
+    ])
+
+    for leave in leaves:
+        ws.append([
+            leave.id,
+            leave.user.username,
+            leave.leave_type,
+            leave.start_date.strftime("%Y-%m-%d"),
+            leave.end_date.strftime("%Y-%m-%d"),
+            leave.status,
+            leave.reviewed_by.username if leave.reviewed_by else "",
+            leave.reviewed_at.strftime("%Y-%m-%d") if leave.reviewed_at else "",
+        ])
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = (
+        'attachment; filename="all_leaves.xlsx"'
+    )
+
+    wb.save(response)
+    return response
+@login_required
+def admin_leave_statistics(request):
+    if not request.user.is_superuser:
+        return HttpResponseForbidden("Admin access only")
+
+    total = LeaveRequest.objects.count()
+    pending = LeaveRequest.objects.filter(status="PENDING").count()
+    approved = LeaveRequest.objects.filter(status="APPROVED").count()
+    rejected = LeaveRequest.objects.filter(status="REJECTED").count()
+
+    casual = LeaveRequest.objects.filter(leave_type="CASUAL").count()
+    sick = LeaveRequest.objects.filter(leave_type="SICK").count()
+    emergency = LeaveRequest.objects.filter(leave_type="EMERGENCY").count()
+
+    return HttpResponse(
+        f"""
+LEAVE STATISTICS (ADMIN)
+-----------------------
+Total Requests : {total}
+Pending        : {pending}
+Approved       : {approved}
+Rejected       : {rejected}
+
+Leave Type Breakdown:
+Casual         : {casual}
+Sick           : {sick}
+Emergency      : {emergency}
+""",
+        content_type="text/plain"
+    )
+@login_required
+def staff_leave_statistics(request):
+    user = request.user
+
+    total = LeaveRequest.objects.filter(user=user).count()
+    pending = LeaveRequest.objects.filter(user=user, status="PENDING").count()
+    approved = LeaveRequest.objects.filter(user=user, status="APPROVED").count()
+    rejected = LeaveRequest.objects.filter(user=user, status="REJECTED").count()
+
+    return HttpResponse(
+        f"""
+MY LEAVE STATISTICS
+------------------
+Total Requests : {total}
+Pending        : {pending}
+Approved       : {approved}
+Rejected       : {rejected}
+""",
+        content_type="text/plain"
+    )
