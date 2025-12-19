@@ -5,9 +5,11 @@ from rest_framework import status
 from django.utils import timezone
 
 from .models import Attendance
-from locations.models import WorkLocation
-from locations.utils import calculate_distance
-from locations.models import LocationLog
+
+# 🔴 Location logic TEMPORARILY DISABLED
+# from locations.models import Geofence
+# from locations.utils import calculate_distance
+# from locations.models import LocationLog
 
 
 @api_view(['POST'])
@@ -17,18 +19,15 @@ def api_check_in(request):
 
     # Prevent multiple open check-ins
     if Attendance.objects.filter(
-        user=user, check_out_time__isnull=True
+        user=user,
+        check_out_time__isnull=True
     ).exists():
         return Response(
             {'error': 'Already checked in'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    latitude = request.data.get('latitude')
-    longitude = request.data.get('longitude')
-    is_mocked = request.data.get('is_mocked', False)
-
-    # Create attendance without location validation
+    # ✅ Create attendance without location validation
     Attendance.objects.create(
         user=user,
         check_in_time=timezone.now(),
