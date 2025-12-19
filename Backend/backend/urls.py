@@ -1,10 +1,8 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
-
 from rest_framework_simplejwt.views import TokenRefreshView
 from accounts.jwt_views import CustomTokenObtainPairView
-
 
 def home_redirect(request):
     return redirect('/accounts/login/')

@@ -8,9 +8,9 @@ def home_redirect(request):
 
 
 urlpatterns = [
-     path('', home_redirect),
+    path('', home_redirect),
     path('login/', login_view, name='login'),
-     path('admin/', admin.site.urls),
+    path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('staff/dashboard/', staff_dashboard, name='staff_dashboard'),
     path('api/login/', api_login),
