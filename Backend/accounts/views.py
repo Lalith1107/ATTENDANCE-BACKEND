@@ -1,47 +1,92 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
-from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 from .models import StaffProfile
-from django.shortcuts import render
 
+
+# =========================
+# STAFF DASHBOARDS
+# =========================
+@login_required
 def staff_dashboard(request):
-    return render(request, 'staff_dashboard.html')  # Create this template later
+    return render(request, "accounts/staff_dashboard.html")
 
 
+@login_required
+def security_dashboard(request):
+    return render(request, "accounts/security_dashboard.html")
+
+
+@login_required
+def housekeeping_dashboard(request):
+    return render(request, "accounts/housekeeping_dashboard.html")
+
+
+@login_required
+def canteen_dashboard(request):
+    return render(request, "accounts/canteen_dashboard.html")
+
+
+# =========================
+# LOGIN VIEW (FIXED)
+# =========================
 def login_view(request):
-    if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
         user = authenticate(request, username=username, password=password)
-        
-        if user is not None:
-            # Admin user bypasses StaffProfile check
-            if user.is_superuser or user.is_staff:
-                login(request, user)
-                return redirect('/admin/')  # Admin dashboard
 
-            # Staff users must have StaffProfile
-            staff_profile = getattr(user, 'staffprofile', None)
-            if not staff_profile:
-                return render(request, 'accounts/login.html', {'error': 'Staff profile not found'})
-            
-            if not staff_profile.is_active_staff:
-                return render(request, 'accounts/login.html', {'error': 'Invalid credentials'})
-            
-            login(request, user)
+        if user is None:
+            return render(
+                request,
+                "accounts/login.html",
+                {"error": "Invalid username or password"}
+            )
 
-            # Role-based redirect
-            if staff_profile.staff_category == 'SECURITY':
-                return redirect('/security/dashboard/')
-            elif staff_profile.staff_category == 'HOUSEKEEPING':
-                return redirect('/housekeeping/dashboard/')
-            elif staff_profile.staff_category == 'CANTEEN':
-                return redirect('/canteen/dashboard/')
-            
-            # Default staff dashboard
-            return redirect('staff_dashboard')
-        
-        else:
-            return render(request, 'accounts/login.html', {'error': 'Invalid credentials'})
-    
-    return render(request, 'accounts/login.html')
+        # ✅ LOGIN USER
+        login(request, user)
+
+        # =========================
+        # ADMIN (ONLY SUPERUSER)
+        # =========================
+        if user.is_superuser:
+            return redirect("/admin/")
+
+        # =========================
+        # STAFF PROFILE CHECK
+        # =========================
+        try:
+            staff_profile = StaffProfile.objects.get(user=user)
+        except StaffProfile.DoesNotExist:
+            return render(
+                request,
+                "accounts/login.html",
+                {"error": "Staff profile not found. Contact admin."}
+            )
+
+        if not staff_profile.is_active_staff:
+            return render(
+                request,
+                "accounts/login.html",
+                {"error": "Your account is inactive"}
+            )
+
+        # =========================
+        # ROLE-BASED REDIRECT
+        # =========================
+        if staff_profile.staff_category == "SECURITY":
+            return redirect("security_dashboard")
+
+        elif staff_profile.staff_category == "HOUSEKEEPING":
+            return redirect("housekeeping_dashboard")
+
+        elif staff_profile.staff_category == "CANTEEN":
+            return redirect("canteen_dashboard")
+
+        # =========================
+        # DEFAULT STAFF DASHBOARD
+        # =========================
+        return redirect("staff_dashboard")
+
+    return render(request, "accounts/login.html")
