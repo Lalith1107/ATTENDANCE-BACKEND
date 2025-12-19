@@ -22,4 +22,3 @@ urlpatterns = [
     path("stats/admin/", views.admin_leave_statistics, name="admin_leave_statistics"),
     path("export/all/", views.export_all_leaves_excel, name="export_all_leaves_excel"),
 ]
-# ========================
