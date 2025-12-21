@@ -22,5 +22,9 @@ urlpatterns = [
     ),
     path("all-history/", views.admin_leave_history, name="admin_leave_history"),
     path("stats/admin/", views.admin_leave_statistics, name="admin_leave_statistics"),
+
+    path("export/all/", views.export_all_leaves_excel, name="export_all_leaves_excel")
+
     path("export/all/", views.export_my_leaves_excel, name="export_my_leaves_excel")
+
 ]
