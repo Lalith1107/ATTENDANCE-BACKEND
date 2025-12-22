@@ -46,7 +46,7 @@ def login_view(request):
 
         # ✅ LOGIN USER
         login(request, user)
-
+        
         # =========================
         # ADMIN (ONLY SUPERUSER)
         # =========================
