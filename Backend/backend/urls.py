@@ -15,5 +15,13 @@ urlpatterns = [
     # App URLs
     path('accounts/', include('accounts.urls')),
     path('attendance/', include('attendance.urls')),
+<<<<<<< HEAD
     path('locations/', include('locations.urls')),  
 ]
+=======
+    path('locations/', include('locations.urls')),
+    path('leaves/', include('leaves.urls')),
+   
+]
+
+>>>>>>> 2d3a47b01e6dcc220f597c86fd72091ea67ed34d
